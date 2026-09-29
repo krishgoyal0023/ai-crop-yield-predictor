@@ -21,6 +21,7 @@ from model.predictor import YieldPredictor
 from utils.weather import WeatherAPI
 from utils.soil import SoilAPI
 from utils.geo import find_district_from_coords, is_in_punjab, compute_elevation
+from services.intelligence import fertilizer_recommendation, irrigation_schedule, disease_risk, economics, rotation_suggestions, agronomist_answer, ndvi_status
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -547,6 +548,98 @@ async def get_model_info():
         "data_period": "2010-2023",
         "validation": "Temporal split (train: 2010-2020, val: 2021-2022, test: 2023)"
     }
+
+
+# ============== FARM INTELLIGENCE ==============
+
+class FertilizerRequest(BaseModel):
+    crop: str
+    soil: Dict = {}
+    area_ha: float = Field(1.0, gt=0)
+    target_yield_t_ha: Optional[float] = None
+    previous_crop: Optional[str] = None
+    lcc: Optional[float] = None
+
+class IrrigationRequest(BaseModel):
+    latitude: float
+    longitude: float
+    crop: str
+    stage: str = "midseason"
+    area_ha: float = Field(1.0, gt=0)
+    efficiency: float = Field(0.75, gt=0.1, le=1.0)
+    pump_lpm: Optional[float] = Field(None, gt=0)
+
+class DiseaseRequest(BaseModel):
+    crop: str
+    latitude: float
+    longitude: float
+    stage: str = "midseason"
+
+class EconomicsRequest(BaseModel):
+    crop: str
+    predicted_yield_t_ha: float = Field(..., ge=0)
+    area_ha: float = Field(1.0, gt=0)
+    sale_price_per_quintal: Optional[float] = Field(None, gt=0)
+    costs_per_ha: Dict[str, float] = {}
+
+class RotationRequest(BaseModel):
+    crop: str
+    water_available: str = "normal"
+
+class AgronomistRequest(BaseModel):
+    question: str = Field(..., min_length=2)
+    crop: str = "Wheat"
+    stage: str = "midseason"
+    soil: Dict = {}
+    weather: Dict = {}
+
+@app.post("/fertilizer/recommend")
+async def recommend_fertilizer(request: FertilizerRequest):
+    try:
+        return fertilizer_recommendation(request.crop, request.soil, request.area_ha, request.target_yield_t_ha, request.previous_crop, request.lcc)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/irrigation/schedule")
+async def get_irrigation_schedule(request: IrrigationRequest):
+    if not is_in_punjab(request.latitude, request.longitude):
+        raise HTTPException(status_code=400, detail="Coordinates outside Punjab")
+    try:
+        return irrigation_schedule(request.latitude, request.longitude, request.crop, request.stage, request.area_ha, request.efficiency, request.pump_lpm)
+    except Exception as e:
+        logger.exception("Irrigation service failed")
+        raise HTTPException(status_code=502, detail=f"Irrigation weather service failed: {e}")
+
+@app.post("/disease/risk")
+async def get_disease_risk(request: DiseaseRequest):
+    if not is_in_punjab(request.latitude, request.longitude):
+        raise HTTPException(status_code=400, detail="Coordinates outside Punjab")
+    try:
+        forecast = irrigation_schedule(request.latitude, request.longitude, request.crop, request.stage, 1.0, 0.75, None)
+        return disease_risk(request.crop, forecast, request.stage)
+    except Exception as e:
+        logger.exception("Disease service failed")
+        raise HTTPException(status_code=502, detail=f"Disease weather service failed: {e}")
+
+@app.post("/economics/calculate")
+async def calculate_economics(request: EconomicsRequest):
+    return economics(request.crop, request.predicted_yield_t_ha, request.area_ha, request.sale_price_per_quintal, request.costs_per_ha)
+
+@app.post("/rotation/suggestions")
+async def get_rotation_suggestions(request: RotationRequest):
+    return rotation_suggestions(request.crop, request.water_available)
+
+@app.post("/agronomist")
+async def ask_agronomist(request: AgronomistRequest):
+    return agronomist_answer(request.question, request.crop, request.stage, request.soil, request.weather)
+
+@app.get("/ndvi/status")
+async def get_ndvi_status():
+    return ndvi_status()
+
+@app.get("/health/services")
+async def service_health():
+    return {"ml_model": models_loaded, "weather": "Open-Meteo configured", "soil": "SoilGrids + district fallback configured", "irrigation": "Open-Meteo ET0 configured", "disease": "Weather-rule engine configured", "economics": "MSP 2026-27 dataset configured", "ndvi": "Credentials required for live Sentinel-2 processing"}
 
 
 # Run with: uvicorn app:app --reload --port 8000
