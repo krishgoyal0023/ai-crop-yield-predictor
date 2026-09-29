@@ -35,7 +35,7 @@ export default function App(){
         calculateEconomics({crop,predicted_yield_t_ha:Number(prediction.predicted_yield)||0,area_ha:area}),
         getRotationSuggestions({crop,water_available:'normal'}),
         getNdviStatus(),
-        storageHelper({crop,production_quintals:Number(prediction.predicted_yield||0)*10*area,current_price_per_quintal:Number(currentPrice||0)||2585,expected_future_price_per_quintal:Number(futurePrice||0)||2585,storage_cost_per_quintal:Number(storageCost||0),expected_loss_percent:Number(lossPct||0)})
+        storageHelper({crop,production_quintals:Number(prediction.predicted_yield||0)*10*area,current_price_per_quintal:Number(currentPrice||0)||(crop==='Wheat'?2585:2441),expected_future_price_per_quintal:Number(futurePrice||0)||(crop==='Wheat'?2585:2441),storage_cost_per_quintal:Number(storageCost||0),expected_loss_percent:Number(lossPct||0)})
       ]);
       const unwrap=x=>x.status==='fulfilled'?x.value:{error:x.reason?.message||'Module unavailable'};
       setData({soil,weather,prediction,fert:unwrap(fert),irr:unwrap(irr),disease:unwrap(disease),econ:unwrap(econ),rotation:unwrap(rotation),ndvi:unwrap(ndvi),storage:unwrap(storage)});
