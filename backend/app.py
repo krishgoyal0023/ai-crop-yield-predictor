@@ -644,6 +644,22 @@ async def service_health():
     return {"ml_model": models_loaded, "weather": "Open-Meteo configured", "soil": "SoilGrids + district fallback configured", "irrigation": "Open-Meteo ET0 configured", "disease": "Weather-rule engine configured", "economics": "MSP 2026-27 dataset configured", "ndvi": "Credentials required for live Sentinel-2 processing"}
 
 
+class StorageRequest(BaseModel):
+    crop: str
+    production_quintals: float = Field(..., ge=0)
+    current_price_per_quintal: float = Field(..., gt=0)
+    expected_future_price_per_quintal: float = Field(..., gt=0)
+    storage_cost_per_quintal: float = Field(0, ge=0)
+    expected_loss_percent: float = Field(0, ge=0, le=100)
+
+@app.post("/economics/storage")
+async def storage_helper(request: StorageRequest):
+    loss_factor=max(0,1-request.expected_loss_percent/100)
+    future_net=request.production_quintals*loss_factor*request.expected_future_price_per_quintal-request.production_quintals*request.storage_cost_per_quintal
+    instant=request.production_quintals*request.current_price_per_quintal
+    break_even=(request.current_price_per_quintal+request.storage_cost_per_quintal)/loss_factor if loss_factor else None
+    return {"instant_sale_value":round(instant,2),"storage_future_net_value":round(future_net,2),"break_even_future_price_per_quintal":round(break_even,2) if break_even else None,"difference":round(future_net-instant,2),"note":"This is a scenario calculator, not a price forecast."}
+
 class ReportRequest(BaseModel):
     location: Dict = {}
     district: Optional[str] = None
