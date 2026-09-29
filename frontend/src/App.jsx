@@ -3,7 +3,7 @@ import MapPicker from './components/MapPicker';
 import {
   predictYield, getSoil, getWeather, recommendFertilizer,
   getIrrigationSchedule, getDiseaseRisk, calculateEconomics,
-  getRotationSuggestions, askAgronomist, getNdviStatus
+  getRotationSuggestions, askAgronomist, getNdviStatus, downloadReport
 } from './api/yieldApi';
 
 const Card=({title,children})=><section className="bg-white rounded-2xl shadow p-5 border border-gray-100"><h2 className="text-lg font-bold text-gray-800 mb-3">{title}</h2>{children}</section>;
@@ -49,6 +49,7 @@ export default function App(){
   };
 
   const reset=()=>{setData(null);setError('');setChat(null);};
+  const report=async()=>{try{await downloadReport({location:{latitude:lat,longitude:lon},district:data.prediction.district,crop,area_ha:area,prediction:data.prediction,fertilizer:data.fert,irrigation:data.irr,disease:data.disease,economics:data.econ,rotation:data.rotation});}catch(e){setError(e.message);}};
 
   return <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50">
     <header className="bg-green-700 text-white shadow-lg"><div className="max-w-7xl mx-auto px-4 py-5">
@@ -77,7 +78,7 @@ export default function App(){
         <Card title="Select Field Location"><MapPicker onLocationSelect={(a,b)=>{setLat(a);setLon(b)}} position={[lat,lon]}/><p className="text-xs text-gray-500 mt-2">Click the map to update coordinates. Punjab coordinates are validated by the backend.</p></Card>
       </div>:
       <div className="space-y-5">
-        <div className="flex justify-between items-center"><div><h2 className="text-2xl font-bold">Field Assessment</h2><p className="text-gray-500">{data.prediction.district} • {crop} • {area} ha</p></div><button onClick={reset} className="border px-4 py-2 rounded-lg">New Analysis</button></div>
+        <div className="flex justify-between items-center"><div><h2 className="text-2xl font-bold">Field Assessment</h2><p className="text-gray-500">{data.prediction.district} • {crop} • {area} ha</p></div><div className="flex gap-2"><button onClick={report} className="bg-green-600 text-white px-4 py-2 rounded-lg">PDF Report</button><button onClick={reset} className="border px-4 py-2 rounded-lg">New Analysis</button></div></div>
 
         <div className="grid md:grid-cols-4 gap-3">
           <Stat label="Predicted yield" value={`${data.prediction.predicted_yield} t/ha`}/><Stat label="Reliability" value={data.prediction.reliability}/><Stat label="Soil source" value={data.soil.source}/><Stat label="Weather source" value={data.weather.source}/>
