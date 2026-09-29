@@ -21,6 +21,9 @@ from model.predictor import YieldPredictor
 from utils.weather import WeatherAPI
 from utils.soil import SoilAPI
 from utils.geo import find_district_from_coords, is_in_punjab, compute_elevation
+from services.intelligence import fertilizer_recommendation, irrigation_schedule, disease_risk, economics, rotation_suggestions, agronomist_answer, ndvi_status
+from services.report import build_field_report
+from fastapi.responses import StreamingResponse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -547,6 +550,132 @@ async def get_model_info():
         "data_period": "2010-2023",
         "validation": "Temporal split (train: 2010-2020, val: 2021-2022, test: 2023)"
     }
+
+
+# ============== FARM INTELLIGENCE ==============
+
+class FertilizerRequest(BaseModel):
+    crop: str
+    soil: Dict = {}
+    area_ha: float = Field(1.0, gt=0)
+    target_yield_t_ha: Optional[float] = None
+    previous_crop: Optional[str] = None
+    lcc: Optional[float] = None
+
+class IrrigationRequest(BaseModel):
+    latitude: float
+    longitude: float
+    crop: str
+    stage: str = "midseason"
+    area_ha: float = Field(1.0, gt=0)
+    efficiency: float = Field(0.75, gt=0.1, le=1.0)
+    pump_lpm: Optional[float] = Field(None, gt=0)
+
+class DiseaseRequest(BaseModel):
+    crop: str
+    latitude: float
+    longitude: float
+    stage: str = "midseason"
+
+class EconomicsRequest(BaseModel):
+    crop: str
+    predicted_yield_t_ha: float = Field(..., ge=0)
+    area_ha: float = Field(1.0, gt=0)
+    sale_price_per_quintal: Optional[float] = Field(None, gt=0)
+    costs_per_ha: Dict[str, float] = {}
+
+class RotationRequest(BaseModel):
+    crop: str
+    water_available: str = "normal"
+
+class AgronomistRequest(BaseModel):
+    question: str = Field(..., min_length=2)
+    crop: str = "Wheat"
+    stage: str = "midseason"
+    soil: Dict = {}
+    weather: Dict = {}
+
+@app.post("/fertilizer/recommend")
+async def recommend_fertilizer(request: FertilizerRequest):
+    try:
+        return fertilizer_recommendation(request.crop, request.soil, request.area_ha, request.target_yield_t_ha, request.previous_crop, request.lcc)
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/irrigation/schedule")
+async def get_irrigation_schedule(request: IrrigationRequest):
+    if not is_in_punjab(request.latitude, request.longitude):
+        raise HTTPException(status_code=400, detail="Coordinates outside Punjab")
+    try:
+        return irrigation_schedule(request.latitude, request.longitude, request.crop, request.stage, request.area_ha, request.efficiency, request.pump_lpm)
+    except Exception as e:
+        logger.exception("Irrigation service failed")
+        raise HTTPException(status_code=502, detail=f"Irrigation weather service failed: {e}")
+
+@app.post("/disease/risk")
+async def get_disease_risk(request: DiseaseRequest):
+    if not is_in_punjab(request.latitude, request.longitude):
+        raise HTTPException(status_code=400, detail="Coordinates outside Punjab")
+    try:
+        forecast = irrigation_schedule(request.latitude, request.longitude, request.crop, request.stage, 1.0, 0.75, None)
+        return disease_risk(request.crop, forecast, request.stage)
+    except Exception as e:
+        logger.exception("Disease service failed")
+        raise HTTPException(status_code=502, detail=f"Disease weather service failed: {e}")
+
+@app.post("/economics/calculate")
+async def calculate_economics(request: EconomicsRequest):
+    return economics(request.crop, request.predicted_yield_t_ha, request.area_ha, request.sale_price_per_quintal, request.costs_per_ha)
+
+@app.post("/rotation/suggestions")
+async def get_rotation_suggestions(request: RotationRequest):
+    return rotation_suggestions(request.crop, request.water_available)
+
+@app.post("/agronomist")
+async def ask_agronomist(request: AgronomistRequest):
+    return agronomist_answer(request.question, request.crop, request.stage, request.soil, request.weather)
+
+@app.get("/ndvi/status")
+async def get_ndvi_status():
+    return ndvi_status()
+
+@app.get("/health/services")
+async def service_health():
+    return {"ml_model": models_loaded, "weather": "Open-Meteo configured", "soil": "SoilGrids + district fallback configured", "irrigation": "Open-Meteo ET0 configured", "disease": "Weather-rule engine configured", "economics": "MSP 2026-27 dataset configured", "ndvi": "Credentials required for live Sentinel-2 processing"}
+
+
+class StorageRequest(BaseModel):
+    crop: str
+    production_quintals: float = Field(..., ge=0)
+    current_price_per_quintal: float = Field(..., gt=0)
+    expected_future_price_per_quintal: float = Field(..., gt=0)
+    storage_cost_per_quintal: float = Field(0, ge=0)
+    expected_loss_percent: float = Field(0, ge=0, le=100)
+
+@app.post("/economics/storage")
+async def storage_helper(request: StorageRequest):
+    loss_factor=max(0,1-request.expected_loss_percent/100)
+    future_net=request.production_quintals*loss_factor*request.expected_future_price_per_quintal-request.production_quintals*request.storage_cost_per_quintal
+    instant=request.production_quintals*request.current_price_per_quintal
+    break_even=(request.current_price_per_quintal+request.storage_cost_per_quintal)/loss_factor if loss_factor else None
+    return {"instant_sale_value":round(instant,2),"storage_future_net_value":round(future_net,2),"break_even_future_price_per_quintal":round(break_even,2) if break_even else None,"difference":round(future_net-instant,2),"note":"This is a scenario calculator, not a price forecast."}
+
+class ReportRequest(BaseModel):
+    location: Dict = {}
+    district: Optional[str] = None
+    crop: Optional[str] = None
+    area_ha: Optional[float] = None
+    prediction: Dict = {}
+    fertilizer: Dict = {}
+    irrigation: Dict = {}
+    disease: Dict = {}
+    economics: Dict = {}
+    rotation: Dict = {}
+
+@app.post("/report")
+async def create_report(request: ReportRequest):
+    pdf=build_field_report(request.model_dump())
+    return StreamingResponse(pdf, media_type="application/pdf", headers={"Content-Disposition":"attachment; filename=field-assessment.pdf"})
 
 
 # Run with: uvicorn app:app --reload --port 8000
