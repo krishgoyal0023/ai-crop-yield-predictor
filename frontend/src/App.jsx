@@ -6,6 +6,7 @@ import SoilCard from './components/SoilCard';
 import WeatherCard from './components/WeatherCard';
 import AdvancedPanel from './components/AdvancedPanel';
 import LanguageSwitcher from './components/LanguageSwitcher';
+import FarmerChatbot from './components/FarmerChatbot';
 import { predictYield, getLocationInfo, getSoil, getWeather } from './api/yieldApi';
 
 export default function App() {
@@ -207,6 +208,8 @@ export default function App() {
           onApply={handlePredict}
         />
       </main>
+
+      <FarmerChatbot crop={crop} stage={stage} latitude={latitude} longitude={longitude} lang={lang} />
 
       {/* Footer */}
       <footer className="bg-gray-800 text-gray-300 py-6 mt-12">
