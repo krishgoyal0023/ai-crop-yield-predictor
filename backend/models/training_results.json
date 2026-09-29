@@ -1,0 +1,224 @@
+{
+  "Model1_History": {
+    "num_features": 7,
+    "features": [
+      "Crop_Code",
+      "Season_Code",
+      "log_Area",
+      "Yield_Lag1",
+      "Yield_MA3",
+      "Yield_MA5",
+      "District_Encoded"
+    ],
+    "best_model": "Ridge",
+    "models": {
+      "Ridge": {
+        "model": "Ridge",
+        "test_mae": 620.12,
+        "test_rmse": 720.24,
+        "test_r2": -0.2015,
+        "test_mape": 11.11,
+        "prediction_interval_width": 1240.23
+      },
+      "RandomForest": {
+        "model": "RandomForest",
+        "test_mae": 683.46,
+        "test_rmse": 789.72,
+        "test_r2": -0.4446,
+        "test_mape": 12.26,
+        "prediction_interval_width": 1366.91
+      },
+      "GradientBoosting": {
+        "model": "GradientBoosting",
+        "test_mae": 763.1,
+        "test_rmse": 882.14,
+        "test_r2": -0.8025,
+        "test_mape": 13.84,
+        "prediction_interval_width": 1526.21
+      },
+      "LightGBM": {
+        "model": "LightGBM",
+        "test_mae": 753.44,
+        "test_rmse": 856.22,
+        "test_r2": -0.6981,
+        "test_mape": 13.74,
+        "prediction_interval_width": 1506.89
+      }
+    }
+  },
+  "Model2_Weather": {
+    "num_features": 7,
+    "features": [
+      "Crop_Code",
+      "Season_Code",
+      "log_Area",
+      "Yield_Lag1",
+      "Yield_MA3",
+      "Yield_MA5",
+      "District_Encoded"
+    ],
+    "best_model": "Ridge",
+    "models": {
+      "Ridge": {
+        "model": "Ridge",
+        "test_mae": 620.12,
+        "test_rmse": 720.24,
+        "test_r2": -0.2015,
+        "test_mape": 11.11,
+        "prediction_interval_width": 1240.23
+      },
+      "RandomForest": {
+        "model": "RandomForest",
+        "test_mae": 683.46,
+        "test_rmse": 789.72,
+        "test_r2": -0.4446,
+        "test_mape": 12.26,
+        "prediction_interval_width": 1366.91
+      },
+      "GradientBoosting": {
+        "model": "GradientBoosting",
+        "test_mae": 763.1,
+        "test_rmse": 882.14,
+        "test_r2": -0.8025,
+        "test_mape": 13.84,
+        "prediction_interval_width": 1526.21
+      },
+      "LightGBM": {
+        "model": "LightGBM",
+        "test_mae": 753.44,
+        "test_rmse": 856.22,
+        "test_r2": -0.6981,
+        "test_mape": 13.74,
+        "prediction_interval_width": 1506.89
+      }
+    }
+  },
+  "Model3_Soil": {
+    "num_features": 14,
+    "features": [
+      "Crop_Code",
+      "Season_Code",
+      "log_Area",
+      "Yield_Lag1",
+      "Yield_MA3",
+      "Yield_MA5",
+      "District_Encoded",
+      "pH",
+      "SOC",
+      "N",
+      "P",
+      "K",
+      "Clay",
+      "Soil_Quality"
+    ],
+    "best_model": "Ridge",
+    "models": {
+      "Ridge": {
+        "model": "Ridge",
+        "test_mae": 624.29,
+        "test_rmse": 725.38,
+        "test_r2": -0.2188,
+        "test_mape": 11.18,
+        "prediction_interval_width": 1248.57
+      },
+      "RandomForest": {
+        "model": "RandomForest",
+        "test_mae": 659.05,
+        "test_rmse": 768.2,
+        "test_r2": -0.3669,
+        "test_mape": 11.87,
+        "prediction_interval_width": 1318.09
+      },
+      "GradientBoosting": {
+        "model": "GradientBoosting",
+        "test_mae": 714.29,
+        "test_rmse": 838.59,
+        "test_r2": -0.6289,
+        "test_mape": 13.04,
+        "prediction_interval_width": 1428.58
+      },
+      "LightGBM": {
+        "model": "LightGBM",
+        "test_mae": 749.03,
+        "test_rmse": 845.86,
+        "test_r2": -0.6573,
+        "test_mape": 13.72,
+        "prediction_interval_width": 1498.06
+      }
+    }
+  },
+  "Model4_Full": {
+    "num_features": 34,
+    "features": [
+      "Crop_Code",
+      "Season_Code",
+      "log_Area",
+      "Year_Numeric",
+      "Decade",
+      "Yield_Lag1",
+      "Yield_MA3",
+      "Yield_MA5",
+      "Yield_Trend",
+      "Yield_Deviation",
+      "Is_Rice_After_Wheat",
+      "Is_Wheat_After_Rice",
+      "District_Crop_History",
+      "pH",
+      "SOC",
+      "N",
+      "P",
+      "K",
+      "Clay",
+      "Sand",
+      "Silt",
+      "Elevation",
+      "pH_Score",
+      "SOC_Score",
+      "Soil_Quality",
+      "Latitude",
+      "Longitude",
+      "pH_SOC",
+      "Trend_Crop",
+      "District_Encoded",
+      "Region_Northeastern",
+      "Region_Southern",
+      "Region_Southwestern",
+      "CS_Wheat_Rabi"
+    ],
+    "best_model": "Ridge",
+    "models": {
+      "Ridge": {
+        "model": "Ridge",
+        "test_mae": 57.57,
+        "test_rmse": 73.45,
+        "test_r2": 0.9875,
+        "test_mape": 1.07,
+        "prediction_interval_width": 115.14
+      },
+      "RandomForest": {
+        "model": "RandomForest",
+        "test_mae": 97.89,
+        "test_rmse": 129.73,
+        "test_r2": 0.961,
+        "test_mape": 1.8,
+        "prediction_interval_width": 195.78
+      },
+      "GradientBoosting": {
+        "model": "GradientBoosting",
+        "test_mae": 75.87,
+        "test_rmse": 107.72,
+        "test_r2": 0.9731,
+        "test_mape": 1.4,
+        "prediction_interval_width": 151.75
+      },
+      "LightGBM": {
+        "model": "LightGBM",
+        "test_mae": 76.03,
+        "test_rmse": 97.11,
+        "test_r2": 0.9782,
+        "test_mape": 1.42,
+        "prediction_interval_width": 152.06
+      }
+    }
+  }
+}
