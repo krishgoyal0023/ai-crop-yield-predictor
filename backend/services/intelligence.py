@@ -101,7 +101,7 @@ def irrigation_schedule(lat: float, lon: float, crop: str, stage: str,
         net=max(0, etc-effective_rain)/max(efficiency,.1)
         volume_m3=net*area_ha*10
         runtime_min=(volume_m3*1000/pump_lpm) if pump_lpm and pump_lpm>0 else None
-        rows.append({"date":ds,"et0_mm":round(et0,2),"rain_mm":round(rain,2),"kc":kc,
+        rows.append({"date":ds,"et0_mm":round(et0,2),"rain_mm":round(rain,2),"temperature_max":round(_num(d.get("temperature_2m_max",[0]*len(d.get("time",[])))[i]),1),"humidity":round(_num(d.get("relative_humidity_2m_mean",[0]*len(d.get("time",[])))[i]),1),"kc":kc,
                      "crop_et_mm":round(etc,2),"irrigation_mm":round(net,2),
                      "water_m3":round(volume_m3,1),"pump_runtime_min":round(runtime_min,1) if runtime_min else None})
     return {"source":"Open-Meteo FAO-56 ET0","crop":crop,"stage":stage,"area_ha":area_ha,
