@@ -114,30 +114,39 @@ export default function App() {
 
   const loadModules = async (prediction, soil, weather) => {
     const payloadBase = {
-      latitude, longitude, crop, stage, farm_area: farmArea,
-      soil_n: soilInput.n ? Number(soilInput.n) : soil?.properties?.N,
-      soil_p: soilInput.p ? Number(soilInput.p) : soil?.properties?.P,
-      soil_k: soilInput.k ? Number(soilInput.k) : soil?.properties?.K,
-      soil_ph: soilInput.ph ? Number(soilInput.ph) : soil?.properties?.pH,
+      latitude, longitude, crop, stage,
+      area_ha: farmArea,
+      farm_area: farmArea,
       pump_lpm: pumpLpm ? Number(pumpLpm) : undefined,
+    };
+    const soilPayload = {
+      P: soilInput.p ? Number(soilInput.p) : soil?.properties?.P,
+      K: soilInput.k ? Number(soilInput.k) : soil?.properties?.K,
+      N: soilInput.n ? Number(soilInput.n) : soil?.properties?.N,
+      pH: soilInput.ph ? Number(soilInput.ph) : soil?.properties?.pH,
     };
     const production = Number(prediction?.predicted_yield || 0) * 10 * farmArea;
 
     const jobs = {
-      fertilizer: recommendFertilizer({ ...payloadBase }),
-      irrigation: getIrrigationSchedule({ ...payloadBase }),
-      disease: getDiseaseRisk({ ...payloadBase }),
+      fertilizer: recommendFertilizer({
+        crop,
+        soil: soilPayload,
+        area_ha: farmArea,
+        target_yield_t_ha: Number(prediction?.predicted_yield || 0),
+        previous_crop: previousCrop || undefined,
+      }),
+      irrigation: getIrrigationSchedule({
+        latitude, longitude, crop, stage, area_ha: farmArea,
+        pump_lpm: pumpLpm ? Number(pumpLpm) : undefined,
+      }),
+      disease: getDiseaseRisk({ latitude, longitude, crop, stage }),
       economics: calculateEconomics({
         crop,
-        farm_area_hectares: farmArea,
-        predicted_yield_t_per_ha: Number(prediction?.predicted_yield || 0),
-        price_per_quintal: Number(prices.current || mspFallback[crop] || 0),
+        area_ha: farmArea,
+        predicted_yield_t_ha: Number(prediction?.predicted_yield || 0),
+        sale_price_per_quintal: Number(prices.current || mspFallback[crop] || 0),
       }),
-      rotation: getRotationSuggestions({
-        crop,
-        previous_crop: previousCrop || null,
-        stage,
-      }),
+      rotation: getRotationSuggestions({ crop, water_available: irrigationType ? 'known' : 'normal' }),
       ndvi: getNdviStatus(latitude, longitude),
       services: getServiceHealth(),
       storage: storageHelper({
@@ -436,13 +445,13 @@ export default function App() {
                 <section className="panel-card">
                   <SectionTitle icon={Droplets} title="Next water action" subtitle="Weather-aware estimate for the first forecast day." />
                   {irrigationRows[0] ? (
-                    <div className="water-highlight"><div className="water-big">{irrigationRows[0].irrigation_mm ?? 0}<span> mm</span></div><p>{irrigationRows[0].date || 'Next forecast day'}</p>{irrigationRows[0].pump_runtime_minutes != null && <div className="runtime">≈ {irrigationRows[0].pump_runtime_minutes} min pump runtime</div>}</div>
+                    <div className="water-highlight"><div className="water-big">{irrigationRows[0].irrigation_mm ?? 0}<span> mm</span></div><p>{irrigationRows[0].date || 'Next forecast day'}</p>{irrigationRows[0].pump_runtime_min != null && <div className="runtime">≈ {irrigationRows[0].pump_runtime_min} min pump runtime</div>}</div>
                   ) : <div className="empty-state">Irrigation forecast not available.</div>}
                 </section>
 
                 <section className="panel-card">
                   <SectionTitle icon={Bug} title="Crop health watch" subtitle="Weather-based risk signal — not a diagnosis." />
-                  {disease.error ? <div className="empty-state">Disease module unavailable.</div> : <div className={`risk-banner risk-${String(disease.risk_level || 'medium').toLowerCase()}`}><div className="risk-score">{disease.score ?? '—'}</div><div><strong>{disease.disease || disease.risk || 'Crop disease risk'}</strong><p>{disease.message || 'Watch crop and field conditions closely.'}</p></div></div>}
+                  {disease.error ? <div className="empty-state">Disease module unavailable.</div> : <div className={`risk-banner risk-${String(disease.risks?.[0]?.risk_levels?.[0]?.risk_level || 'medium').toLowerCase()}`}><div className="risk-score">{disease.risks?.[0]?.risk_score ?? '—'}</div><div><strong>{disease.risks?.[0]?.disease || disease.risk || 'Crop disease risk'}</strong><p>{disease.risks?.[0]?.why?.join(', ') || disease.disclaimer || 'Watch crop and field conditions closely.'}</p></div></div>}
                 </section>
 
                 <section className="panel-card">
@@ -458,7 +467,7 @@ export default function App() {
               <div className="results-grid">
                 <section className="panel-card span-2">
                   <SectionTitle icon={Droplets} title="7-day irrigation scheduler" subtitle="Daily estimate based on ET0, crop stage and forecast weather." />
-                  <div className="table-wrap"><table><thead><tr><th>Date</th><th>ET0</th><th>Rain</th><th>ETc</th><th>Irrigate</th><th>Pump</th></tr></thead><tbody>{irrigationRows.map((r,i)=><tr key={i}><td>{r.date || '—'}</td><td>{r.et0_mm ?? '—'} mm</td><td>{r.precipitation_mm ?? '—'} mm</td><td>{r.etc_mm ?? '—'} mm</td><td><strong>{r.irrigation_mm ?? 0} mm</strong></td><td>{r.pump_runtime_minutes != null ? `${r.pump_runtime_minutes} min` : 'Add pump flow'}</td></tr>)}</tbody></table></div>
+                  <div className="table-wrap"><table><thead><tr><th>Date</th><th>ET0</th><th>Rain</th><th>ETc</th><th>Irrigate</th><th>Pump</th></tr></thead><tbody>{irrigationRows.map((r,i)=><tr key={i}><td>{r.date || '—'}</td><td>{r.et0_mm ?? '—'} mm</td><td>{r.rain_mm ?? '—'} mm</td><td>{r.crop_et_mm ?? '—'} mm</td><td><strong>{r.irrigation_mm ?? 0} mm</strong></td><td>{r.pump_runtime_minutes != null ? `${r.pump_runtime_minutes} min` : 'Add pump flow'}</td></tr>)}</tbody></table></div>
                 </section>
                 <section className="panel-card span-2"><SectionTitle icon={Bug} title="Health warning" subtitle="Weather signal to help you inspect the field earlier." /><div className="risk-card"><div><div className="muted-label">Risk level</div><div className="risk-level-text">{disease.risk_level || '—'}</div></div><div><div className="muted-label">Signal</div><div>{disease.message || disease.risk || 'No warning available.'}</div></div></div></section>
               </div>
@@ -467,7 +476,7 @@ export default function App() {
             {activeTab === 'money' && (
               <div className="results-grid">
                 <section className="panel-card"><SectionTitle icon={IndianRupee} title="Revenue & MSP" /><div className="money-number">₹{Number(econ.gross_revenue || 0).toLocaleString('en-IN')}</div><p className="text-slate-500 mt-2">Reference price: ₹{Number(econ.price_per_quintal || mspFallback[crop] || 0).toLocaleString('en-IN')}/q</p></section>
-                <section className="panel-card"><SectionTitle icon={ArrowRightLeft} title="Storage scenario" subtitle="Scenario calculator, not a market-price forecast." />{modules.storage?.error ? <div className="empty-state">Storage tool unavailable.</div> : <div className="storage-box"><div><span>Instant sale</span><strong>₹{Number(modules.storage?.instant_sale_value || 0).toLocaleString('en-IN')}</strong></div><div><span>After storage</span><strong>₹{Number(modules.storage?.future_net_value || 0).toLocaleString('en-IN')}</strong></div><div><span>Break-even future price</span><strong>₹{Number(modules.storage?.break_even_price || 0).toLocaleString('en-IN')}/q</strong></div></div>}</section>
+                <section className="panel-card"><SectionTitle icon={ArrowRightLeft} title="Storage scenario" subtitle="Scenario calculator, not a market-price forecast." />{modules.storage?.error ? <div className="empty-state">Storage tool unavailable.</div> : <div className="storage-box"><div><span>Instant sale</span><strong>₹{Number(modules.storage?.instant_sale_value || 0).toLocaleString('en-IN')}</strong></div><div><span>After storage</span><strong>₹{Number(modules.storage?.storage_future_net_value || 0).toLocaleString('en-IN')}</strong></div><div><span>Break-even future price</span><strong>₹{Number(modules.storage?.break_even_future_price_per_quintal || 0).toLocaleString('en-IN')}/q</strong></div></div>}</section>
               </div>
             )}
 
