@@ -23,28 +23,6 @@ The **AI Crop Yield Predictor** is a specialized decision-support framework engi
 By capturing real-time meteorological conditions, soil nutrient metrics, and historical crop performance records, the platform provides district-level yield predictions (quintal/acre), statistical confidence intervals, historical baseline comparisons, and an interactive **What-If Climate Simulator** for stress-testing agricultural outputs against heatwaves or rainfall deficits.
 
 ---
-
-## 🖼️ Application Interfaces & Visual Overview
-
-<div align="center">
-  <img src="image_agent_tag_11966961068376408221" alt="Yield Predictor React UI Dashboard" width="700" />
-  <p><i>Figure 1: React Dashboard Interface featuring prediction cards and spatial controls.</i></p>
-</div>
-
-<br />
-
-<div align="center">
-  <img src="image_agent_tag_11966961068376408878" alt="FastAPI Swagger Documentation Interface" width="700" />
-  <p><i>Figure 2: RESTful API Swagger Documentation served via FastAPI on <code>http://localhost:8000/docs</code>.</i></p>
-</div>
-
-<br />
-
-<div align="center">
-  <img src="image_agent_tag_11966961068376411660" alt="Punjab Regional Agricultural Map" width="500" />
-  <p><i>Figure 3: Spatial Cropping Boundaries for Districts across Punjab.</i></p>
-</div>
-
 ---
 
 ## ✨ Comprehensive Feature Matrix
