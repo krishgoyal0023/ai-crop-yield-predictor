@@ -451,7 +451,7 @@ export default function App() {
 
                 <section className="panel-card">
                   <SectionTitle icon={Bug} title="Crop health watch" subtitle="Weather-based risk signal — not a diagnosis." />
-                  {disease.error ? <div className="empty-state">Disease module unavailable.</div> : <div className={`risk-banner risk-${String(disease.risks?.[0]?.risk_levels?.[0]?.risk_level || 'medium').toLowerCase()}`}><div className="risk-score">{disease.risks?.[0]?.risk_score ?? '—'}</div><div><strong>{disease.risks?.[0]?.disease || disease.risk || 'Crop disease risk'}</strong><p>{disease.risks?.[0]?.why?.join(', ') || disease.disclaimer || 'Watch crop and field conditions closely.'}</p></div></div>}
+                  {disease.error ? <div className="empty-state">Disease module unavailable.</div> : <div className={`risk-banner risk-${String(disease.risks?.[0]?.risk_level || 'medium').toLowerCase()}`}><div className="risk-score">{disease.risks?.[0]?.risk_score ?? '—'}</div><div><strong>{disease.risks?.[0]?.disease || disease.risks?.[0]?.disease || 'Crop disease risk'}</strong><p>{disease.risks?.[0]?.why?.join(', ') || disease.disclaimer || 'Watch crop and field conditions closely.'}</p></div></div>}
                 </section>
 
                 <section className="panel-card">
