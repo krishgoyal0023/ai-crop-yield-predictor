@@ -22,6 +22,8 @@ from utils.weather import WeatherAPI
 from utils.soil import SoilAPI
 from utils.geo import find_district_from_coords, is_in_punjab, compute_elevation
 from services.intelligence import fertilizer_recommendation, irrigation_schedule, disease_risk, economics, rotation_suggestions, agronomist_answer, ndvi_status
+from services.report import build_field_report
+from fastapi.responses import StreamingResponse
 
 # Setup logging
 logging.basicConfig(level=logging.INFO)
@@ -640,6 +642,24 @@ async def get_ndvi_status():
 @app.get("/health/services")
 async def service_health():
     return {"ml_model": models_loaded, "weather": "Open-Meteo configured", "soil": "SoilGrids + district fallback configured", "irrigation": "Open-Meteo ET0 configured", "disease": "Weather-rule engine configured", "economics": "MSP 2026-27 dataset configured", "ndvi": "Credentials required for live Sentinel-2 processing"}
+
+
+class ReportRequest(BaseModel):
+    location: Dict = {}
+    district: Optional[str] = None
+    crop: Optional[str] = None
+    area_ha: Optional[float] = None
+    prediction: Dict = {}
+    fertilizer: Dict = {}
+    irrigation: Dict = {}
+    disease: Dict = {}
+    economics: Dict = {}
+    rotation: Dict = {}
+
+@app.post("/report")
+async def create_report(request: ReportRequest):
+    pdf=build_field_report(request.model_dump())
+    return StreamingResponse(pdf, media_type="application/pdf", headers={"Content-Disposition":"attachment; filename=field-assessment.pdf"})
 
 
 # Run with: uvicorn app:app --reload --port 8000
