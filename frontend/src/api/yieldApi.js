@@ -26,3 +26,5 @@ export const getRotationSuggestions = (data) => request('/rotation/suggestions',
 export const askAgronomist = (data) => request('/agronomist',{method:'POST',body:JSON.stringify(data)});
 export const getNdviStatus = () => request('/ndvi/status');
 export const getServiceHealth = () => request('/health/services');
+
+export async function downloadReport(payload){ const response=await fetch(`${API_BASE}/report`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}); if(!response.ok) throw new Error('Report generation failed'); const blob=await response.blob(); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download='field-assessment.pdf'; a.click(); URL.revokeObjectURL(url); }
