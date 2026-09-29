@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🌾 AI Crop Yield Predictor - Punjab
+# 🌾 AI Crop Yield Predictor 
 
 **An End-to-End Machine Learning Platform for District-Level Yield Forecasting, Geospatial Soil Analytics, and Climate Sensitivity Simulation**
 
