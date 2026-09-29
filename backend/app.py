@@ -118,6 +118,102 @@ class SimulateRequest(BaseModel):
     scenarios: List[Dict] = Field(..., description="List of scenario parameters to simulate")
 
 
+
+
+class ChatRequest(BaseModel):
+    message: str = Field(..., min_length=1, max_length=500, description="Farmer's question")
+    crop: Optional[str] = Field(None, description="Current crop: Wheat or Rice")
+    stage: Optional[str] = Field(None, description="Crop stage")
+    language: str = Field("en", description="Response language: en, hi, pa")
+    district: Optional[str] = Field(None, description="Punjab district")
+
+
+_CHAT_FAQS = {
+    "en": [
+        ("irrigat", "For irrigation, check soil moisture together with the crop stage and short-term rain forecast. For wheat, avoid unnecessary watering when useful rainfall is expected; the exact schedule should be based on field conditions."),
+        ("water", "Water need depends on crop, soil, growth stage, weather and irrigation efficiency. KhetiAI can combine these signals to suggest when irrigation is needed."),
+        ("fertil", "For fertilizer, use a soil test where possible and match nutrients to the crop and target yield. Do not apply a blind dose just because the crop is growing slowly."),
+        ("urea", "Urea timing should follow the crop and soil condition. For wheat, split nitrogen applications are commonly used; use the field's nitrogen status or LCC guidance where available."),
+        ("npk", "NPK stands for nitrogen, phosphorus and potassium. The useful amount depends on soil-test values, crop, target yield and previous crop."),
+        ("disease", "For disease risk, watch crop stage, humidity, temperature, recent rain and visible symptoms. KhetiAI's weather-based alerts are early warnings, not a diagnosis."),
+        ("yellow rust", "Wheat yellow rust risk increases under cool, humid conditions. Scout the field for yellow-orange pustules and confirm symptoms locally before treatment."),
+        ("sheath blight", "Rice sheath blight risk is associated with warm, humid conditions and dense canopies. Check the lower leaf sheaths and confirm symptoms before treatment."),
+        ("yield", "Yield prediction is an estimate from the model and available field data. It should support planning, not replace field observations or local agronomic advice."),
+        ("msp", "MSP means Minimum Support Price. KhetiAI can show the reference price used by the app, but actual farmgate or market prices can differ by place, quality and timing."),
+        ("rice", "For rice, tell me the growth stage and what you want to know—irrigation, disease risk, fertilizer or expected yield."),
+        ("wheat", "For wheat, tell me the growth stage and what you want to know—irrigation, disease risk, fertilizer or expected yield."),
+        ("weather", "Weather affects irrigation and disease risk. KhetiAI can use current/forecast weather inputs to make the recommendation more field-specific."),
+        ("soil", "KhetiAI's map-based soil values are estimates, not a laboratory soil test. Use a lab test for fertilizer decisions whenever practical."),
+    ],
+    "hi": [
+        ("irrigat", "सिंचाई के लिए मिट्टी की नमी, फसल की अवस्था और आने वाले दिनों की बारिश साथ में देखें। अनावश्यक पानी से बचें।"),
+        ("water", "पानी की जरूरत फसल, मिट्टी, फसल की अवस्था, मौसम और सिंचाई की क्षमता पर निर्भर करती है। KhetiAI इन संकेतों से सिंचाई का समय सुझा सकता है।"),
+        ("fertil", "खाद के लिए संभव हो तो मिट्टी की जांच करें और फसल व लक्ष्य उपज के अनुसार पोषक तत्व दें। बिना जांच के अंधाधुंध मात्रा न डालें।"),
+        ("urea", "यूरिया की मात्रा और समय फसल व मिट्टी की स्थिति के अनुसार होना चाहिए। गेहूं में नाइट्रोजन को कई भागों में देना आम तरीका है।"),
+        ("npk", "NPK का मतलब नाइट्रोजन, फास्फोरस और पोटाश है। सही मात्रा मिट्टी की जांच, फसल, लक्ष्य उपज और पिछली फसल पर निर्भर करती है।"),
+        ("disease", "रोग के जोखिम के लिए फसल की अवस्था, नमी, तापमान, बारिश और दिखाई देने वाले लक्षण देखें। KhetiAI की चेतावनी शुरुआती संकेत है, निदान नहीं।"),
+        ("yield", "उपज का अनुमान मॉडल और उपलब्ध खेत डेटा पर आधारित है। इसे योजना बनाने में मदद की तरह लें, अंतिम गारंटी की तरह नहीं।"),
+        ("msp", "MSP न्यूनतम समर्थन मूल्य है। ऐप में दिया गया संदर्भ मूल्य वास्तविक स्थानीय बाजार भाव से अलग हो सकता है।"),
+        ("weather", "मौसम सिंचाई और रोग जोखिम दोनों को प्रभावित करता है। KhetiAI मौसम के संकेतों के आधार पर सलाह को अधिक खेत-विशिष्ट बनाता है।"),
+        ("soil", "मैप से मिलने वाला मिट्टी डेटा अनुमानित है, लैब टेस्ट नहीं। खाद संबंधी निर्णय के लिए संभव हो तो मिट्टी की जांच करवाएं।"),
+    ],
+    "pa": [
+        ("irrigat", "ਸਿੰਚਾਈ ਲਈ ਮਿੱਟੀ ਦੀ ਨਮੀ, ਫਸਲ ਦੀ ਅਵਸਥਾ ਅਤੇ ਆਉਣ ਵਾਲੀ ਬਾਰਿਸ਼ ਨੂੰ ਇਕੱਠੇ ਵੇਖੋ। ਬਿਨਾਂ ਲੋੜ ਪਾਣੀ ਨਾ ਲਾਓ।"),
+        ("water", "ਪਾਣੀ ਦੀ ਲੋੜ ਫਸਲ, ਮਿੱਟੀ, ਅਵਸਥਾ, ਮੌਸਮ ਅਤੇ ਸਿੰਚਾਈ ਦੀ ਸਮਰੱਥਾ ਤੇ ਨਿਰਭਰ ਕਰਦੀ ਹੈ। KhetiAI ਸਿੰਚਾਈ ਦਾ ਸਮਾਂ ਸੁਝਾ ਸਕਦਾ ਹੈ।"),
+        ("fertil", "ਖਾਦ ਲਈ ਸੰਭਵ ਹੋਵੇ ਤਾਂ ਮਿੱਟੀ ਦੀ ਜਾਂਚ ਕਰਵਾਓ ਅਤੇ ਫਸਲ ਤੇ ਟਾਰਗੇਟ ਉਪਜ ਅਨੁਸਾਰ ਪੋਸ਼ਕ ਤੱਤ ਦਿਓ। ਬਿਨਾਂ ਜਾਂਚ ਦੇ ਅੰਨ੍ਹੇਵਾਹ ਮਾਤਰਾ ਨਾ ਪਾਓ।"),
+        ("urea", "ਯੂਰੀਆ ਦੀ ਮਾਤਰਾ ਅਤੇ ਸਮਾਂ ਫਸਲ ਤੇ ਮਿੱਟੀ ਦੀ ਹਾਲਤ ਅਨੁਸਾਰ ਹੋਣਾ ਚਾਹੀਦਾ ਹੈ। ਗੇਹੂੰ ਵਿੱਚ ਨਾਈਟ੍ਰੋਜਨ ਕਈ ਹਿੱਸਿਆਂ ਵਿੱਚ ਦੇਣਾ ਆਮ ਤਰੀਕਾ ਹੈ।"),
+        ("npk", "NPK ਦਾ ਮਤਲਬ ਨਾਈਟ੍ਰੋਜਨ, ਫਾਸਫੋਰਸ ਅਤੇ ਪੋਟਾਸ਼ ਹੈ। ਸਹੀ ਮਾਤਰਾ ਮਿੱਟੀ ਟੈਸਟ, ਫਸਲ, ਟਾਰਗੇਟ ਉਪਜ ਅਤੇ ਪਿਛਲੀ ਫਸਲ ਤੇ ਨਿਰਭਰ ਕਰਦੀ ਹੈ।"),
+        ("disease", "ਰੋਗ ਦੇ ਖਤਰੇ ਲਈ ਫਸਲ ਦੀ ਅਵਸਥਾ, ਨਮੀ, ਤਾਪਮਾਨ, ਬਾਰਿਸ਼ ਅਤੇ ਦਿਖਣ ਵਾਲੇ ਲੱਛਣ ਵੇਖੋ। KhetiAI ਦੀ ਚੇਤਾਵਨੀ ਸ਼ੁਰੂਆਤੀ ਸੰਕੇਤ ਹੈ, ਡਾਇਗਨੋਸਿਸ ਨਹੀਂ।"),
+        ("yield", "ਉਪਜ ਦਾ ਅਨੁਮਾਨ ਮਾਡਲ ਅਤੇ ਉਪਲਬਧ ਖੇਤੀ ਡਾਟੇ ਤੇ ਆਧਾਰਿਤ ਹੈ। ਇਹ ਯੋਜਨਾ ਲਈ ਸਹਾਇਕ ਹੈ, ਗਾਰੰਟੀ ਨਹੀਂ।"),
+        ("msp", "MSP ਦਾ ਮਤਲਬ ਘੱਟੋ-ਘੱਟ ਸਮਰਥਨ ਮੁੱਲ ਹੈ। ਐਪ ਦਾ ਰੈਫਰੈਂਸ ਭਾਅ ਸਥਾਨਕ ਮੰਡੀ ਭਾਅ ਤੋਂ ਵੱਖ ਹੋ ਸਕਦਾ ਹੈ।"),
+        ("weather", "ਮੌਸਮ ਸਿੰਚਾਈ ਅਤੇ ਰੋਗ ਦੇ ਖਤਰੇ ਨੂੰ ਪ੍ਰਭਾਵਿਤ ਕਰਦਾ ਹੈ। KhetiAI ਮੌਸਮੀ ਡਾਟੇ ਨਾਲ ਸਲਾਹ ਨੂੰ ਖੇਤ ਅਨੁਸਾਰ ਬਣਾਉਂਦਾ ਹੈ।"),
+        ("soil", "ਮੈਪ ਤੋਂ ਮਿਲਣ ਵਾਲਾ ਮਿੱਟੀ ਡਾਟਾ ਅੰਦਾਜ਼ਾ ਹੈ, ਲੈਬ ਟੈਸਟ ਨਹੀਂ। ਖਾਦ ਦੇ ਫੈਸਲੇ ਲਈ ਸੰਭਵ ਹੋਵੇ ਤਾਂ ਮਿੱਟੀ ਟੈਸਟ ਕਰਵਾਓ।"),
+    ],
+}
+
+_CHAT_FALLBACKS = {
+    "en": "I can help with irrigation, fertilizer, NPK, wheat or rice disease risk, soil, weather, yield and MSP. Tell me your crop and stage.",
+    "hi": "मैं सिंचाई, खाद, NPK, गेहूं/चावल के रोग, मिट्टी, मौसम, उपज और MSP पर मदद कर सकता हूँ। अपनी फसल और अवस्था बताएं।",
+    "pa": "ਮੈਂ ਸਿੰਚਾਈ, ਖਾਦ, NPK, ਗੇਹੂੰ/ਚਾਵਲ ਦੇ ਰੋਗ, ਮਿੱਟੀ, ਮੌਸਮ, ਉਪਜ ਅਤੇ MSP ਬਾਰੇ ਮਦਦ ਕਰ ਸਕਦਾ ਹਾਂ। ਆਪਣੀ ਫਸਲ ਅਤੇ ਅਵਸਥਾ ਦੱਸੋ।",
+}
+
+
+def _chat_answer(message: str, language: str) -> str:
+    lang = language if language in _CHAT_FAQS else "en"
+    normalized = message.lower().strip()
+    for keyword, answer in _CHAT_FAQS[lang]:
+        if keyword in normalized:
+            return answer
+    return _CHAT_FALLBACKS[lang]
+
+
+@app.post("/chat")
+async def chat_with_farmer(request: ChatRequest):
+    """
+    Lightweight farmer assistant for common Punjab crop questions.
+    This MVP uses curated agronomy answers rather than claiming an external LLM.
+    """
+    answer = _chat_answer(request.message, request.language)
+    context = {
+        "crop": request.crop,
+        "stage": request.stage,
+        "district": request.district,
+        "language": request.language,
+    }
+    return {
+        "answer": answer,
+        "language": request.language if request.language in _CHAT_FAQS else "en",
+        "context": context,
+        "suggested_questions": {
+            "en": ["When should I irrigate?", "How much urea should I use?", "Is my wheat at disease risk?", "What does NPK mean?"],
+            "hi": ["सिंचाई कब करें?", "यूरिया कब दें?", "गेहूं में रोग का खतरा है?", "NPK क्या है?"],
+            "pa": ["ਸਿੰਚਾਈ ਕਦੋਂ ਕਰੀਏ?", "ਯੂਰੀਆ ਕਦੋਂ ਪਾਈਏ?", "ਗੇਹੂੰ ਵਿੱਚ ਰੋਗ ਦਾ ਖਤਰਾ ਹੈ?", "NPK ਕੀ ਹੈ?"],
+        }.get(request.language, []),
+        "disclaimer": "General guidance only. For pesticide or fertilizer treatment decisions, confirm with a local agronomist and the product label.",
+    }
+}
+
+
 # ============== API ENDPOINTS ==============
 
 @app.get("/")
