@@ -73,3 +73,160 @@ body {
 .punjabi-text {
   font-family: 'Noto Sans Gurmukhi', 'Inter', sans-serif;
 }
+
+
+/* Farmer chatbot */
+.farmer-chat-fab {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 0;
+  border-radius: 999px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #15803d, #16a34a);
+  color: white;
+  font-weight: 700;
+  box-shadow: 0 12px 30px rgba(22, 101, 52, 0.28);
+  cursor: pointer;
+}
+.farmer-chat-fab:hover { transform: translateY(-1px); }
+
+.farmer-chat-panel {
+  position: fixed;
+  right: 22px;
+  bottom: 82px;
+  z-index: 1201;
+  width: min(390px, calc(100vw - 28px));
+  height: min(610px, calc(100vh - 105px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #ffffff;
+  border: 1px solid #dbe8de;
+  border-radius: 20px;
+  box-shadow: 0 22px 60px rgba(18, 55, 30, 0.20);
+}
+.farmer-chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 17px;
+  background: linear-gradient(135deg, #166534, #15803d);
+  color: white;
+}
+.farmer-chat-header h3 { font-size: 15px; font-weight: 800; margin: 0; }
+.farmer-chat-header p { font-size: 11px; color: #dcfce7; margin: 2px 0 0; }
+.farmer-chat-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,.16);
+}
+.farmer-chat-close {
+  background: transparent;
+  border: 0;
+  color: white;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 8px;
+}
+.farmer-chat-close:hover { background: rgba(255,255,255,.12); }
+.farmer-chat-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f6faf7;
+}
+.farmer-chat-bubble {
+  max-width: 88%;
+  padding: 11px 13px;
+  border-radius: 16px;
+  margin-bottom: 9px;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-wrap;
+}
+.farmer-chat-bubble.assistant {
+  margin-right: auto;
+  background: white;
+  border: 1px solid #dce9df;
+  color: #294234;
+  border-top-left-radius: 6px;
+}
+.farmer-chat-bubble.user {
+  margin-left: auto;
+  background: #dcfce7;
+  color: #14532d;
+  border: 1px solid #bbf7d0;
+  border-top-right-radius: 6px;
+}
+.farmer-chat-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 10px 0 4px;
+}
+.farmer-chat-suggestions button {
+  border: 1px solid #b8d9c0;
+  background: #effaf2;
+  color: #21633a;
+  border-radius: 999px;
+  padding: 8px 10px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.farmer-chat-suggestions button:hover { background: #e1f4e6; }
+.farmer-chat-error {
+  margin: 8px 0;
+  font-size: 11px;
+  color: #b42318;
+}
+.farmer-chat-disclaimer {
+  padding: 8px 14px;
+  font-size: 10px;
+  line-height: 1.35;
+  color: #6b7d70;
+  background: #ffffff;
+  border-top: 1px solid #e6efe8;
+}
+.farmer-chat-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #ffffff;
+  border-top: 1px solid #e6efe8;
+}
+.farmer-chat-input input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #cfe0d3;
+  border-radius: 12px;
+  padding: 11px 12px;
+  font-size: 13px;
+  outline: none;
+}
+.farmer-chat-input input:focus { border-color: #16a34a; box-shadow: 0 0 0 3px rgba(22,163,74,.10); }
+.farmer-chat-input button {
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #16a34a;
+  color: white;
+  cursor: pointer;
+}
+.farmer-chat-input button:disabled { opacity: .45; cursor: not-allowed; }
+
+@media (max-width: 640px) {
+  .farmer-chat-fab { right: 14px; bottom: 14px; padding: 13px 15px; }
+  .farmer-chat-fab span { display: none; }
+  .farmer-chat-panel { right: 10px; bottom: 72px; width: calc(100vw - 20px); height: min(620px, calc(100vh - 92px)); }
+}

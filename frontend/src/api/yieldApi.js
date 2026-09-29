@@ -59,3 +59,21 @@ export async function simulateWhatIf(request) {
   }
   return response.json();
 }
+
+
+export async function chatWithAgronomist(request) {
+  const response = await fetch(`${API_BASE}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(request),
+  });
+  if (!response.ok) {
+    let detail = 'Chat assistant is unavailable';
+    try {
+      const error = await response.json();
+      detail = error.detail || detail;
+    } catch {}
+    throw new Error(detail);
+  }
+  return response.json();
+}
